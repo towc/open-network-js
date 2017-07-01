@@ -221,9 +221,9 @@ module.exports = {
     *                                                                          *
     ***************************************************************************/
     onlyAllowOrigins: [
-      'http://objs.herokuapp.com',
-      'http://objs.xyz',
-      'http://objs.co',
+      'http://onjs.herokuapp.com',
+      'http://onjs.xyz',
+      'http://onjs.co',
       'http://localhost:1337',
     ],
 
