@@ -44,6 +44,15 @@ module.exports = {
       type: 'number',
       defaultsTo: 0
     },
+    popularity: {
+      type: 'number',
+      defaultsTo: 1
+    },
+
+    keywords: {
+      type: 'string',
+      defaultsTo: ''
+    },
 
     isPrivate: {
       type: 'boolean',

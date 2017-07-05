@@ -26,7 +26,7 @@ const util = {
   },
   updateIdTitle( id, idTitle, ownerId, callback ) {
   
-    Post.findOne({ idTitle, owner: { id: ownerId } }).exec( ( err, post ) => {
+    Post.findOne({ idTitle, owner: ownerId }).exec( ( err, post ) => {
     
       if( err )
         return callback( err );
@@ -63,6 +63,16 @@ const util = {
       return callback( false, false, 'markdownContent' );
     })
   },
+  updateKeywords( id, keywords, callback ) {
+  
+    Post.update({ id }, { keywords }).exec( ( err, records ) => {
+    
+      if( err )
+        return callback( err );
+
+      return callback( false, false, 'keywords' );
+    })
+  },
   updatePrivate( id, isPrivate, callback ) {
   
     Post.update({ id }, { isPrivate }).exec( ( err, records ) => {
@@ -72,6 +82,15 @@ const util = {
 
       return callback( false, false, 'isPrivate' );
     })
+  },
+
+  sendPosts( err, posts, res ) {
+    
+    if( err )
+      return util.err( res, err );
+
+    // TODO sanitize
+    return res.json( posts );
   }
 
 }
@@ -108,13 +127,14 @@ module.exports = {
   createCustom( req, res ) {
   
     const title = req.param( 'postname' )
-        , idTitle = req.param( 'postid' ) || title.split(' ').join('-').replace( /[\,\'\:]/g, '' )
+        , idTitle = req.param( 'postid' ) || title.split(' ').join('-').replace( /[\,\'\:]/g, '' ) + '-' + Math.random().toString().split('.')[1]
         , description = req.param( 'description' )
         , markdownContent = req.param( 'markdowncontent' )
         , ownerId = req.session.userId
+        , keywords = req.param( 'keywords' )
         , isPrivate = req.param( 'isPrivate' );
 
-    Post.create({ title, idTitle, description, markdownContent, owner: ownerId, isPrivate }).exec( ( err, post ) => {
+    Post.create({ title, idTitle, description, markdownContent, owner: ownerId, keywords, isPrivate }).exec( ( err, post ) => {
     
       if( err )
         return util.err( res, err );
@@ -131,7 +151,8 @@ module.exports = {
         , description = req.param( 'description' )
         , markdownContent = req.param( 'markdowncontent' )
         , ownerId = req.session.userId
-        , isPrivate = req.param( 'isPrivate' );
+        , keywords = req.param( 'keywords' )
+        , isPrivate = req.param( 'isprivate' );
 
     const toGo = []
         , callback = ( err, errMessage, property ) => {
@@ -171,6 +192,10 @@ module.exports = {
         toGo.push( 'markdownContent' );
         util.updateMarkdownContent( id, markdownContent, callback );
       }
+      if( keywords ) {
+        toGo.push( 'keywords' );
+        util.updateKeywords( id, keywords, callback );
+      }
       if( isPrivate !== post.isPrivate ) {
         toGo.push( 'isPrivate' );
         util.updatePrivate( id, isPrivate, callback );
@@ -183,39 +208,49 @@ module.exports = {
     const idTitle = req.param( 'postname' )
         , userName = req.param( 'username' );
 
-    Post.findOne({ idTitle, owner: { userName } })
-      .populate( 'seenBy' )
-      .populate( 'appreciatedBy' )
-      .exec( ( err, post ) => {
-   
+    User.findOne({ userName }).exec( ( err, user ) => {
+
       if( err )
-        return util.err( res, err );
+        util.err( res, err );
 
-      if( post.isPrivate && req.session.userName !== userName )
-        return res.notFound( 'post does not exist' );
+      Post.findOne({ idTitle, owner: user.id })
+        .populate( 'seenBy' )
+        .populate( 'appreciatedBy' )
+        .populate( 'owner' )
+        .exec( ( err, post ) => {
+       
+          if( err )
+            return util.err( res, err );
 
-      const response = MC.map( post, {
-        idTitle: I,
-        title: I,
-        description: I,
-        markdownContent: I,
-        owner: {
-          userName: I,
-          name: I,
-          description: I,
-          onlineStatus: I,
-          privilegeStatus: I,
-          profileAsset: ( asset ) => {
-            if( !asset )
-              return undefined;
+          if( post.isPrivate && req.session.userName !== userName )
+            return res.notFound( 'post does not exist' );
 
-            return MC.map( profileAsset, {
-              path: I
-            });
-          }
-        }
-      })
+          const response = MC.map( post, {
+            idTitle: I,
+            title: I,
+            description: I,
+            markdownContent: I,
+            keywords: I,
+            isPrivate: I,
+            owner: {
+              userName: I,
+              name: I,
+              description: I,
+              onlineStatus: I,
+              privilegeStatus: I,
+              profileAsset: ( asset ) => {
+                if( !asset )
+                  return undefined;
 
+                return MC.map( profileAsset, {
+                  path: I
+                });
+              }
+            }
+          });
+
+          res.json( response );
+        });
     })
   },
 
@@ -231,6 +266,47 @@ module.exports = {
 
       res.ok( 'post deleted' );
     })
+  },
+
+  search( req, res ) {
+  
+    const keywords = req.param( 'keywords' )
+        , mode = req.param( 'mode' )
+        , page = req.param( 'page' ) || 0;
+
+    const pageSize = 6
+        , searchQuery = keywords ? { 
+          and: keywords.map( keyword => ({ keywords: { 'contains': keyword } }) )
+        } : {};
+
+    switch( mode ) {
+
+      case 'recent':
+        Post.find(Object.assign( searchQuery, {
+          skip: page * pageSize,
+          limit: pageSize,
+          sort: 'createdAt DESC'
+        })).exec( ( err, posts ) => util.sendPosts( err, posts, res ) );
+        break;
+
+      case 'following':
+        const userId = req.session.userId;
+        Post.find(Object.assign( searchQuery, {
+          where: { owner: { followedBy: { 'contains': userId }}},
+          skip: page * pageSize,
+          limit: pageSize,
+          sort: 'createdAt DESC'
+        })).exec( ( err, posts ) => util.sendPosts( err, posts, res ) );
+        break;
+        
+      case 'popular':
+        Post.find(Object.assign( searchQuery, {
+          skip: page * pageSize,
+          limit: pageSize,
+          sort: 'popularity DESC'
+        })).exec( ( err, posts ) => util.sendPosts( err, posts, res ) );
+        break;
+    }
   }
 
 };

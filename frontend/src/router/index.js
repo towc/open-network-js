@@ -4,6 +4,7 @@ import Home from '@/components/Home'
 import Auth from '@/components/Auth'
 import User from '@/components/User'
 import Post from '@/components/Post'
+import PostEdit from '@/components/PostEdit'
 
 Vue.use(Router)
 
@@ -23,9 +24,13 @@ export default new Router({
       name: 'User',
       component: User
     }, {
-      path: '/user/:username/post/:postid',
+      path: '/post/:username/:postid',
       name: 'Post',
       component: Post
+    }, {
+      path: '/post/:username/:postid/edit',
+      name: 'PostEdit',
+      component: PostEdit
     }
   ]
 })

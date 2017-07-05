@@ -25,6 +25,10 @@ module.exports = {
     profileAsset: {
       model: 'Asset'
     },
+    links: {
+      type: 'string',
+      defaultsTo: ',,,,,'
+    },
 
     posts: {
       collection: 'Post',

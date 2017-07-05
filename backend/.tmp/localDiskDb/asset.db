@@ -1,2 +1,1 @@
-{"name":"profile image","idName":"profile-image","path":"//towc.eu/towc-logo.png","owner":3,"createdAt":1498899257199,"updatedAt":1498899614983,"id":1,"description":"asset to be used in a post","_id":1}
 {"$$indexCreated":{"fieldName":"id","unique":true,"sparse":false}}

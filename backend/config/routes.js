@@ -12,7 +12,10 @@ const vuePaths = [
   '/',
   '/auth',
   '/user/:username',
-  '/user/:username/post/:postname'
+  '/post/:username/:postname',
+  '/post/:username/:postname/edit',
+  '/asset/:username/:assetname',
+  '/asset/:username/:assetname/edit',
     ]
     , vueRoutes = vuePaths.reduce( ( obj, path ) => { obj[ path ] = 'Vue.serve'; return obj }, {} );
 
@@ -49,7 +52,6 @@ module.exports.routes = Object.assign( vueRoutes, {
   'post /api/asset/create': 'Asset.createCustom',
   'post /api/asset/update': 'Asset.updateCustom',
   'get /api/asset/:username/:assetid': 'Asset.request',
-  'get /asset/:username/:assetid': 'Asset.request',
   'delete /asset/:assetid': 'Asset.delete',
 
   'get /socket/call-in/:token': 'User.socketCallIn',

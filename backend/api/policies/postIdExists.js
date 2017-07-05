@@ -9,7 +9,7 @@ module.exports = ( req, res, next ) => {
       return res.serverError( 'issue finding the post' );
 
     if( !post )
-      return res.notFound( 'post not found' );
+      return res.badRequest( 'post not found' );
 
     return next();
   })

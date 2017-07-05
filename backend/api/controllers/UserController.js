@@ -48,6 +48,35 @@ const util = {
       return callback( false, false, 'name' );
     })
   },
+  updateProfileAsset( id, profileAssetIdName, callback ) {
+  
+    Asset.findOne({ owner: id, idName: profileAssetIdName }).exec( ( err, asset ) => {
+    
+      if( err )
+        return callback( err );
+
+      if( !asset )
+        return callback( false, 'asset doesn\'t exist' );
+
+      User.update({ id }, { profileAsset: asset.id }).exec( ( err, records ) => {
+      
+        if( err )
+          return callbacK( err );
+
+        return callback( false, false, 'profileAsset' );
+      })
+    })
+  },
+  updateLinks( id, links, callback ) {
+  
+    User.update({ id }, { links }).exec( ( err, records ) => {
+    
+      if( err )
+        return callback( err );
+
+      return callback( false, false, 'links' );
+    })
+  },
   updateDescription( id, description, callback ) {
   
     User.update({ id }, { description }).exec( ( err, records ) => {
@@ -101,7 +130,7 @@ module.exports = {
           return util.err( res, err );
 
         if( !result )
-          return res.forbidden( 'invalid password' );
+          return res.badRequest( 'invalid password' ); // unauthorized
 
         req.session.isAuthenticated = true;
         req.session.userName = user.userName;
@@ -164,17 +193,14 @@ module.exports = {
         , password = req.param( 'password' )
         , email = req.param( 'email' );
 
-    const name = req.param( 'name' )
-        , description = req.param( 'description' )
-
-        
+    const name = req.param( 'name' ) || userName;
 
     bcrypt.hash( password, 10, ( err, hash ) => {
     
       if( err )
         return util.err( res, err );
 
-      User.create({ userName, hash, email, name, description }).exec( ( err, user ) => {
+      User.create({ userName, hash, email, name }).exec( ( err, user ) => {
         
         if( err )
           return util.err( res, err );
@@ -190,6 +216,8 @@ module.exports = {
     const id = req.session.userId
         , userName = req.param( 'username' )
         , name = req.param( 'name' )
+        , profileAssetIdName = req.param( 'profileaset' )
+        , links = req.param( 'links' )
         , description = req.param( 'description' )
         , password = req.param( 'password' );
 
@@ -216,6 +244,16 @@ module.exports = {
     if( name ) {
       toGo.push( 'name' );
       util.updateName( id, name, callback );
+    }
+
+    if( profileAssetIdName ) {
+      toGo.push( 'profileAsset' );
+      util.updateProfileAsset( id, profileAssetIdName, callback );
+    }
+    
+    if( links) {
+      toGo.push( 'links' );
+      util.updateLinks( id, links, callback );
     }
 
     if( description ) {
@@ -332,8 +370,24 @@ module.exports = {
 
   status( req, res ) {
   
-    // TODO
-    res.json( req.session );
+    if( req.session.isAuthenticated ) {
+      const id = req.session.userId;
+
+      User.findOne({ id })
+        .populate( 'profileAsset')
+        .exec( ( err, user ) => {
+
+      
+          if( err )
+            util.err( res, err );
+
+          res.json({
+            isAuthenticated: true,
+            userName: user.userName
+          });
+
+        })
+    } else res.json({ isAuthenticated: false });
   },
 
   follow( req, res ) {

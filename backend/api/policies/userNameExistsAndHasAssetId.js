@@ -6,13 +6,13 @@ module.exports = ( req, res, next ) => {
       return res.serverError( 'internal error while finding a user' );
 
     if( !user )
-      return res.notFound( 'user does not exist' );
+      return res.badRequest( 'user does not exist' );
 
     for( let i = 0; i < user.assets.length; ++i )
       if( user.assets[ i ].idName === req.param( 'assetid' ) )
         return next();
 
-    return res.notFound( 'user does not have asset' );
+    return res.badRequest( 'user does not have asset' );
 
   })
 }

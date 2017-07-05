@@ -8,7 +8,7 @@ module.exports = ( req, res, next ) => {
       return res.serverError( 'error finding user' );
 
     if( user )
-      return res.forbidden( 'user already exists' );
+      return res.badRequest( 'user already exists' );
 
     return next();
 

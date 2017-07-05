@@ -8,7 +8,7 @@ module.exports = ( req, res, next ) => {
     if( user )
       return next();
 
-    return res.notFound( 'user not found' );
+    return res.badRequest( 'user not found' );
   })
 
 }

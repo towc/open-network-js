@@ -8,6 +8,8 @@ module.exports.policies = {
   *                                                                          *
   ***************************************************************************/
 
+  // TODO switch to res.unauthorized
+
   UserController: {
     login: [ 'isNotAuthenticated', 'hasUserNameOrEmail', 'hasPassword' ],
     logout: [ 'isAuthenticated' ],

@@ -28,6 +28,10 @@ module.exports = {
       type: 'string',
       required: true
     },
+    isPrivate: {
+      type: 'boolean',
+      defaultsTo: false
+    }
   },
 
 };
