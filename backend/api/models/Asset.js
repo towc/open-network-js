@@ -26,11 +26,15 @@ module.exports = {
     },
     path: {
       type: 'string',
-      required: true
+      defaultsTo: 'http://lorempizza.com/240/240'
     },
     isPrivate: {
       type: 'boolean',
       defaultsTo: false
+    },
+    keywords: {
+      type: 'string',
+      defaultsTo: ''
     }
   },
 

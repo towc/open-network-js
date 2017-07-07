@@ -133,6 +133,9 @@ export default {
     },
 
     addPost() {
+
+      if( !this.isNameToAddAcceptable )
+        return false;
       
       this.$store.dispatch( 'createPost', { postName: this.nameToAdd } )
         .then( postId => {
@@ -142,6 +145,9 @@ export default {
       this.nameToAdd = '';
     },
     addAsset() {
+      
+      if( !this.isNameToAddAcceptable )
+        return false;
       
       this.$store.dispatch( 'createAsset', { assetName: this.nameToAdd } )
         .then( assetId => {
@@ -221,9 +227,9 @@ export default {
 .icon {
   cursor: pointer;
   color: #aaa;
-  width: 27px;
+  width: 20px;
   height: 100%;
-  margin: 0 5px;
+  padding: 0 5px;
 }
 .header-control {
   position: absolute;
@@ -232,6 +238,9 @@ export default {
   right: 0;
   top: 60px;
   background-color: #333;
+}
+.header-control-icons {
+  margin-right: 10px;
 }
 .header-control-open {
   animation: .3s display-panel;

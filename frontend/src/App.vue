@@ -72,6 +72,9 @@ a {
 .container-post {
   border-color: #2E9D51;
 }
+.container-asset {
+  border-color: #7241EE;
+}
 .container-agnostic {
   border-color: #888;
 }
@@ -97,6 +100,9 @@ a {
 .form-input-post {
   border-bottom-color: #2E9D51;
 }
+.form-input-asset {
+  border-bottom-color: #7241EE;
+}
 .form-input-agnostic {
   border-bottom-color: #888;
 }
@@ -115,6 +121,11 @@ a {
 
   transition: background-color .5s, border-color .5s;
 }
+a.form-button {
+  display: inline-block;
+  text-align: center;
+  line-height: 33px;
+}
 .form-button-inverted.form-button-inverted {
   background-color: transparent;
   border-width: 2px;
@@ -131,6 +142,14 @@ a {
 .form-button-asset {
   background-color: #5B34BE;
   border-color: #5B34BE;
+}
+.form-button-user {
+  background-color: #8D7E27;
+  border-color: #8D7E27;
+}
+.form-button-danger {
+  background-color: #9E2E2E;
+  border-color: #9E2E2E;
 }
 
 .form-info {

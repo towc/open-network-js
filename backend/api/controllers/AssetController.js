@@ -65,7 +65,29 @@ const util = {
 
       return callback( false, false, 'path' );
     })
-  }
+  },
+
+  updateKeywords( id, keywords, callback ) {
+  
+    Asset.update({ id }, { keywords }).exec( ( err, asset ) => {
+    
+      if( err )
+        return callback( err );
+
+      return callback( false, false, 'keywords' );
+    })
+  },
+
+  updateIsPrivate( id, isPrivate, callback ) {
+  
+    Asset.update({ id }, { isPrivate }).exec( ( err, asset ) => {
+    
+      if( err )
+        return callback( err );
+
+      return callback( false, false, 'isPrivate' );
+    })
+  },
 };
 
 module.exports = {
@@ -97,6 +119,8 @@ module.exports = {
         , newIdName = req.param( 'newassetid' ) || ( name && req.param( 'updateassetid' ) && name.replace( / /g, '-' ).replace( /[\,\:\@\/\\]/g, '') )
         , description = req.param( 'description' )
         , path = req.param( 'assetpath' )
+        , isPrivate = req.param( 'isprivate' )
+        , keywords = req.param( 'keywords' )
 
         , toGo = []
         , callback = ( err, errMessage, property ) => {
@@ -135,6 +159,14 @@ module.exports = {
       if( path ) {
         toGo.push( 'path' );
         util.updatePath( id, path, callback );
+      }
+      if( keywords ) {
+        toGo.push( 'keywords' );
+        util.updateKeywords( id, keywords, callback );
+      }
+      if( isPrivate !== asset.isPrivate ) {
+        toGo.push( 'isPrivate' );
+        util.updatePrivate( id, isPrivate, callback );
       }
     })
   },

@@ -11,7 +11,8 @@ module.exports = {
 
     idTitle: {
       type: 'string',
-      required: true
+      required: true,
+      unique: true
     },
     title: {
       type: 'string',
@@ -31,14 +32,16 @@ module.exports = {
     },
 
     seenBy: {
-      collection: 'User'
+      collection: 'User',
+      via: 'seenPosts'
     },
     views: {
       type: 'number',
       defaultsTo: 0
     },
     appreciatedBy: {
-      collection: 'User'
+      collection: 'User',
+      via: 'appreciatedPosts'
     },
     appreciations: {
       type: 'number',
@@ -47,6 +50,10 @@ module.exports = {
     popularity: {
       type: 'number',
       defaultsTo: 1
+    },
+
+    editedAt: {
+      type: 'number'
     },
 
     keywords: {

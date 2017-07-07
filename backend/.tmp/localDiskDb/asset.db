@@ -1,1 +1,2 @@
 {"$$indexCreated":{"fieldName":"id","unique":true,"sparse":false}}
+{"name":"testing","idName":"testing-6994976003952715","owner":1,"createdAt":1499387438191,"updatedAt":1499387438191,"id":1,"description":"asset to be used in a post","path":"http://lorempizza.com/240/240","isPrivate":false,"_id":1}

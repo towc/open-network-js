@@ -3,10 +3,13 @@
     <div class="layer layer-1">
       <h1 class="title">Edit Post</h1>
     </div>
-    <div class="layer layer-2">
+    <div class="layer layer2 fullscreen-info-message"
+      v-if=fullScreenInfoDisplaying> {{ fullScreenInfoMessage }}</div>
+    <div class="layer layer-2"
+      v-else >
       <markdown-editor class="md-editor"
                        v-model=markdownContent
-                      :configs=mdConfigs  />
+                       :configs=mdConfigs  />
       <div class="container container-post">
      
         <div class="layer layer-2-sub layer-2a">
@@ -56,9 +59,13 @@
           <div class="form-info">{{ infoMessage }}</div>
           <button class="form-button form-button-post"
             :class="{ 'form-button-inverted': !isSaveable }"
-            @click=save >Save</button>
-          <button class="form-button form-button-post"
-            @click=goToPost >Go To Post</button>
+            @click=savePost >Save</button>
+          <router-link class="form-button form-button-post"
+            :to="`/post/${ currentUser.userName }/${ postId }`" >Go To Post</router-link>
+        </div>
+        <div class="layer layer-2-sub layer-2f">
+          <button class="form-button form-button-danger"
+            @click=deletePost >Delete</button>
         </div>
       </div>
     </div>
@@ -77,19 +84,13 @@ export default {
   name: 'post-edit',
 
   beforeMount() {
-  
-    if( this.isAuthenticated )
-      return this.populatePostEdit();
 
-    const interval = window.setInterval( () => {
-    
-      if( this.isAuthenticated ) {
-        window.clearInterval( interval );
-        this.populatePostEdit();
-      }
-        
-    }, 100 );
-
+    this.getData();
+  },
+  watch: {
+    '$route' () {
+      this.getData();
+    }
   },
 
   data: () => ({
@@ -97,14 +98,16 @@ export default {
     TYPE, SYNC,
 
     infoMessage: '',
+    fullScreenInfoDisplaying: false,
+    fullScreenInfoMessage: '',
 
     markdownContent: '',
     postTitle: '',
-    //postId: '', // replaced in computed
     postIdTyped: '',
     postIsPrivate: false,
     postKeywords: '',
 
+    // FIXED by displaying backend message, but keep for later in case
     isPostIdAvailable: true,
 
     saved: {
@@ -124,7 +127,7 @@ export default {
   }),
 
   computed: {
-    ...mapState([ 'isAuthenticated', 'currentUser' ]),
+    ...mapState([ 'isAuthenticated', 'pendingAuthentication', 'currentUser' ]),
     isSaveable() {
       return ( this.markdownContent !== this.saved.markdownContent
             || this.postTitle !== this.saved.postTitle
@@ -145,6 +148,42 @@ export default {
   },
 
   methods: {
+    getData() {
+    
+      let found = this.checkAuthAndGetPost( -1 ); 
+
+      let round = 0;
+      if( !found ) {
+        const interval = window.setInterval( () => {
+        
+          found = this.checkAuthAndGetPost( round++ );
+          
+          if( found )
+            window.clearInterval( interval );
+            
+        }, 100 );
+      }
+    },
+    checkAuthAndGetPost( rounds ) {
+
+      console.log( rounds, this.pendingAuthentication );
+    
+      if( !this.isAuthenticated && !this.pendingAuthentication )
+        return this.setFullScreenInfo( true, 'Log In or Sign Up to edit a post')
+
+      else if( !this.isAuthenticated && this.pendingAuthentication )
+        this.setFullScreenInfo( false );
+
+      else if( this.$route.params.username !== this.currentUser.userName ) 
+        this.$router.replace( `/post/${ this.$route.params.username }/${ this.$route.params.postid}` );
+      
+      else {
+        this.populatePostEdit();
+        return true;
+      }
+
+      return false;
+    },
     switchSync( index ) {
 
       switch( index ) {
@@ -170,17 +209,32 @@ export default {
     },
     populatePostEdit() {
     
-      this.$store.dispatch( 'populatePostEdit', { postId: this.$route.params.postid } )
-        .then( postData => {
+      this.$store.dispatch( 'populatePost', {
+
+        userName: this.currentUser.userName,
+        postId: this.$route.params.postid 
+
+      }).then( postData => {
 
           this.markdownContent = this.saved.markdownContent = postData.markdownContent;
           this.postTitle = this.saved.postTitle = postData.title;
           this.postIdTyped = this.saved.postId = postData.idTitle;
           this.postIsPrivate = this.saved.postIsPrivate = postData.isPrivate;
           this.postKeywords = this.saved.postKeywords = postData.keywords.split(',').join(', ');
+
+          this.setFullScreenInfo( false );
+
+        }).catch( error => {
+
+          console.log( err );
+          switch( error ) {
+            case '"user does not have post"':
+              this.setFullScreenInfo( true, 'Post either doesn\'t exist or has been removed' );
+              break;
+          }
         })
     },
-    save() {
+    savePost() {
       
       if( !this.isSaveable )
         return;
@@ -211,14 +265,36 @@ export default {
           return this.setInfo( errMessage )
 
         this.setInfo( '' );
-        this.$router.push( `/post/${ this.currentUser.userName }/${ this.postId }/edit` );
+        this.$router.replace( `/post/${ this.currentUser.userName }/${ this.postId }/edit` );
       
       })
 
     },
+    goToPost() {
+      
+      this.$router.push( `/post/${ this.currentUser.userName }/${ this.postId }` );
+    },
+    deletePost() {
+      this.$store.dispatch( 'deletePost', {
+
+        postId: this.$route.params.postid
+
+      }).then( () => {
+      
+        if( window.history.length > 1 )
+          return this.$router.go(-1);
+
+        this.$router.replace( '/' );
+      });
+    },
 
     setInfo( message ) {
       this.infoMessage = message;
+    },
+    setFullScreenInfo( displaying, message ) {
+    
+      this.fullScreenInfoMessage = message;
+      return this.fullScreenInfoDisplaying = displaying;
     }
   },
 
@@ -248,6 +324,13 @@ export default {
   width: 815px;
   margin-left: calc( 50% - 815px / 2 )
 }
+.fullscreen-info-message {
+  height: 400px;
+  line-height: 400px;
+  font-size: 40px;
+  text-align: center;
+  color: #eee;
+}
 .md-editor {
   width: 465px;
   font: 13px Roboto;
@@ -275,6 +358,11 @@ export default {
   font-size: 10px;
   margin-top: 6px;
 }
+.form-label-keywords-comma {
+  color: #aaa;
+  font-size: 13px;
+  margin-top: 5px;
+}
 .private-switch {
   width: 264px;
 }
@@ -284,10 +372,8 @@ export default {
 .layer-2e {
   margin-bottom: 20px;
 }
-
-.form-label-keywords-comma {
-  color: #aaa;
-  font-size: 13px;
-  margin-top: 5px;
+.layer-2f {
+  margin-bottom: 20px;
 }
+
 </style>

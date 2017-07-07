@@ -9,6 +9,7 @@ Vue.use( Vuex );
 const store = new Vuex.Store({
   state: {
     isAuthenticated: false,
+    pendingAuthentication: true,
     currentUser: false,
   },
 
@@ -16,6 +17,7 @@ const store = new Vuex.Store({
     authenticate( state, payload ) {
     
       state.isAuthenticated = payload.isAuthenticated;
+      state.pendingAuthentication = false;
 
       if( payload.isAuthenticated ) {
         state.currentUser = payload.userData; 
@@ -158,16 +160,56 @@ const store = new Vuex.Store({
       });
     },
 
-    populatePostEdit( context, payload ) {
+    populatePost( context, payload ) {
     
       return new Promise( ( resolve, reject ) => {
       
         const xhr = new XMLHttpRequest;
-        xhr.open( 'GET', `/api/post/${ context.state.currentUser.userName }/${ payload.postId }` );
+        xhr.open( 'GET', `/api/post/${ payload.userName }/${ payload.postId }` );
         xhr.onload = () => {
         
-          if( xhr.status === 200 )
-            resolve( JSON.parse( xhr.responseText ) );
+          if( xhr.status === 200 ) {
+            let response = JSON.parse( xhr.responseText );
+
+            if( !response.owner.profileAsset )
+              response.owner.profileAsset = {
+                path: 'https://gravatar.com/avatar/6d552cd1dea552ad9ca12f745eead5c7?s=512&d=https://codepen.io/assets/avatars/user-avatar-512x512-6e240cf350d2f1cc07c2bed234c3a3bb5f1b237023c204c782622e80d6b212ba.png',
+                idName: 'default'
+              }
+
+            return resolve( response );
+          }
+
+          const text = xhr.responseText;
+          reject( text.substring( 1, text.length - 1 ) );
+
+        };
+        xhr.send();
+      })
+    },
+    populateAsset( context, payload ) {
+    
+      return new Promise( ( resolve, reject ) => {
+      
+        const xhr = new XMLHttpRequest;
+        xhr.open( 'GET', `/api/asset/${ payload.userName }/${ payload.postId }` );
+        xhr.onload = () => {
+        
+          if( xhr.status === 200 ) {
+            let response = JSON.parse( xhr.responseText );
+
+            if( !response.owner.profileAsset )
+              response.owner.profileAsset = {
+                path: 'https://gravatar.com/avatar/6d552cd1dea552ad9ca12f745eead5c7?s=512&d=https://codepen.io/assets/avatars/user-avatar-512x512-6e240cf350d2f1cc07c2bed234c3a3bb5f1b237023c204c782622e80d6b212ba.png',
+                idName: 'default'
+              }
+
+            return resolve( response );
+          }
+
+          const text = xhr.responseText;
+          reject( text.substring( 1, text.length - 1 ) );
+
         };
         xhr.send();
       })
@@ -186,6 +228,36 @@ const store = new Vuex.Store({
 
         };
         xhr.send( JSON.stringify( payload ) );
+      })
+    },
+    deletePost( context, payload ) {
+
+      return new Promise( ( resolve, reject ) => {
+      
+        const xhr = new XMLHttpRequest;
+        xhr.open( 'DELETE', `/api/post/${ payload.postId }` );
+
+        xhr.onload = () => {
+        
+          resolve();
+        };
+        xhr.send();
+      })
+    },
+    appreciatePost( context, payload ) {
+    
+      return new Promise( ( resolve, reject ) => {
+      
+        const xhr = new XMLHttpRequest;
+        xhr.open( 'GET', `/api/post/appreciate/${ payload.userName }/${ payload.postId }` );
+
+        xhr.onload = () => {
+        
+          let text = xhr.responseText;
+          resolve( xhr.status === 200 ? '' : text.substring( 1, text.length - 1 ) );
+
+        };
+        xhr.send();
       })
     }
   }

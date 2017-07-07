@@ -27,7 +27,7 @@ module.exports.policies = {
   },
 
   PostController: {
-    appreciate: [ 'isAuthenticated', 'userNameExistsAndHasPostId' ],
+    appreciate: [ 'isAuthenticated', 'userNameExistsAndHasPostId', 'userDoesNotAlreadyAppreciate' ],
 
     createCustom: [ 'isAuthenticated', 'hasPostName' ],
     updateCustom: [ 'isAuthenticated', 'hasPostId', 'postIdExists' ],
@@ -36,7 +36,7 @@ module.exports.policies = {
   },
 
   AssetController: {
-    createCustom: [ 'isAuthenticated', 'hasAssetName', 'hasAssetPath' ],
+    createCustom: [ 'isAuthenticated', 'hasAssetName' ],
     updateCustom: [ 'isAuthenticated', 'hasAssetId' ],
     request: [ 'userNameExistsAndHasAssetId' ],
     delete: [ 'isAuthenticated' ]

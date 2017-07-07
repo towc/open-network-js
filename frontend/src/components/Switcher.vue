@@ -76,4 +76,10 @@ export default {
 .switch-post > .switch-item-active {
   background-color: #2E9D51;
 }
+.switch-asset > .switch-item {
+  background-color: #3E2580;
+}
+.switch-asset > .switch-item-active {
+  background-color: #5B34BE;
+}
 </style>

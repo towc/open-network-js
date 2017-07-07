@@ -111,7 +111,10 @@ export default {
         if( [ 400, 401 ].indexOf( xhr.status ) > -1 )
           return this.setInfo( xhr.responseText.slice( 1, xhr.responseText.length - 1 ), false );
         
-       this.$router.push( '/user/' + this.userName );
+        if( window.history.length < 2 )
+          return this.$router.push( '/user/' + this.userName );
+
+        return this.$router.go( -1 );
       })
     },
   },

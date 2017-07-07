@@ -39,7 +39,7 @@ const util = {
         if( err )
           return callback( err );
 
-        return callback( false, false, 'idTitle' );
+        return callback( false, false, 'newIdTitle' );
       })
     })
   },
@@ -55,7 +55,9 @@ const util = {
   },
   updateMarkdownContent( id, markdownContent, callback ) {
   
-    Post.update({ id }, { markdownContent }).exec( ( err, records ) => {
+    const editedAt = Date.now();
+
+    Post.update({ id }, { markdownContent, editedAt }).exec( ( err, records ) => {
     
       if( err )
         return callback( err );
@@ -99,7 +101,7 @@ module.exports = {
   
   appreciate( req, res ) {
     
-    const titleId = req.param( 'postname' )
+    const idTitle = req.param( 'postid' )
         , userName = req.param( 'username' )
         , userId = req.session.userId
 
@@ -108,17 +110,26 @@ module.exports = {
       if( err )
         util.err( res, err );
 
-      Post.findOne({ titleId, owner: user.id }).exec( ( err, post ) => {
+      Post.findOne({ idTitle, owner: user.id }).exec( ( err, post ) => {
       
         if( err )
           return util.err( res, err );
-        
-        Post.addToCollection( post.id, 'appreciatedBy' ).members( [ user.id ] ).exec( ( err ) => {
 
+        const appreciations = post.appreciations + 1;
+        Post.update({ idTitle }, { appreciations }).exec( ( err, records ) => {
+        
           if( err )
             return util.err( res, err );
+        });
+        
+        Post.addToCollection( post.id, 'appreciatedBy' )
+          .members( [ user.id ] )
+          .exec( ( err ) => {
 
-          return res.ok( 'post appreciated' );
+            if( err )
+              return util.err( res, err );
+
+            return res.ok( 'post appreciated' );
         });
       })
     })
@@ -132,9 +143,10 @@ module.exports = {
         , markdownContent = req.param( 'markdowncontent' )
         , ownerId = req.session.userId
         , keywords = req.param( 'keywords' )
-        , isPrivate = req.param( 'isPrivate' );
+        , isPrivate = req.param( 'isPrivate' )
+        , editedAt = Date.now();
 
-    Post.create({ title, idTitle, description, markdownContent, owner: ownerId, keywords, isPrivate }).exec( ( err, post ) => {
+    Post.create({ title, idTitle, description, markdownContent, owner: ownerId, keywords, isPrivate, editedAt }).exec( ( err, post ) => {
     
       if( err )
         return util.err( res, err );
@@ -156,14 +168,14 @@ module.exports = {
 
     const toGo = []
         , callback = ( err, errMessage, property ) => {
-        
+
           if( err )
             return util.err( res, err );
 
           if( errMessage )
             return res.badRequest( errMessage )
 
-          toGo.splice( toGo.indexOf( property, 1 ) );
+          toGo.splice( toGo.indexOf( property ), 1 );
 
           if( toGo.length === 0 )
             return res.ok( 'parameters updated' );
@@ -205,7 +217,7 @@ module.exports = {
 
   request( req, res ) {
   
-    const idTitle = req.param( 'postname' )
+    const idTitle = req.param( 'postid' )
         , userName = req.param( 'username' );
 
     User.findOne({ userName }).exec( ( err, user ) => {
@@ -214,16 +226,44 @@ module.exports = {
         util.err( res, err );
 
       Post.findOne({ idTitle, owner: user.id })
-        .populate( 'seenBy' )
-        .populate( 'appreciatedBy' )
         .populate( 'owner' )
         .exec( ( err, post ) => {
        
           if( err )
             return util.err( res, err );
 
-          if( post.isPrivate && req.session.userName !== userName )
-            return res.notFound( 'post does not exist' );
+          if( !req.session.seenPost )
+            req.session.seenPost = {};
+
+          if( !req.session.seenPost[ user.id ] )
+            req.session.seenPost[ user.id ] = {};
+
+          if( !req.session.seenPost[ user.id ][ post.id ] ) {
+
+            req.session.seenPost[ user.id ][ post.id ] = true;
+
+            const views = post.views + 1;
+            Post.update({ idTitle }, { views }).exec( ( err, records ) => {
+            
+              if( err )
+                return util.err( res, err );
+
+            });
+
+            if( req.session.isAuthenticated ) {
+            
+              const userId = req.session.userId;
+              Post.addToCollection( post.id, 'seenBy' )
+                .members([ userId ])
+                .exec( ( err ) => {
+
+                  if( err )
+                    return util.err( res, err );
+
+                });
+
+            }
+          }
 
           const response = MC.map( post, {
             idTitle: I,
@@ -232,6 +272,10 @@ module.exports = {
             markdownContent: I,
             keywords: I,
             isPrivate: I,
+            views: I,
+            appreciations: I,
+            createdAt: I,
+            editedAt: I,
             owner: {
               userName: I,
               name: I,
@@ -256,10 +300,10 @@ module.exports = {
 
   delete( req, res ) {
     
-    const idTitle = req.param( 'postname' )
-        , userName = req.session.userName;
+    const idTitle = req.param( 'postid' )
+        , ownerId = req.session.userId;
 
-    Post.destroy({ idTitle, owner: { userName }}).exec( ( err ) => {
+    Post.destroy({ idTitle, owner: ownerId }).exec( ( err ) => {
       
       if( err )
         return util.err( res, err );

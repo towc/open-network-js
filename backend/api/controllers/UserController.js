@@ -14,6 +14,92 @@ const util = {
     sails.log( err );
     return res.serverError('internal server error');
   },
+  getUserResponse( user ) {
+  
+    return MC.map( user, {
+      userName: I,
+      name: I,
+      description: I,
+      profileAsset: ( asset ) => {
+
+        if( !asset )
+          return undefined;
+
+        return MC.map( asset, {
+          path: I
+        });
+      },
+      posts: [ ( post ) => {
+
+        if( post.isPrivate && req.session.userName !== user.userName )
+          return undefined;
+
+        return MC.map( post, {
+          idTitle: I,
+          title: I,
+          description: I,
+          views: I,
+          appreciations: I
+        })
+      }],
+      appreciatedPosts: [{
+        idTitle: I,
+        title: I,
+        description: I,
+        owner: {
+          userName: I
+        },
+        views: I,
+        appreciatons: I
+      }],
+      follows: [{
+        userName: I,
+        name: I,
+        onlineStatus: I,
+        profileAsset: ( asset ) => {
+
+          if( !asset )
+            return undefined;
+
+          return MC.map( asset, {
+            path: I
+          });
+        },
+        privilegeStatus: I
+      }],
+      followedBy: [{
+        userName: I,
+        name: I,
+        onlineStatus: I,
+        profileAsset: ( asset ) => {
+
+          if( !asset )
+            return undefined;
+
+          return MC.map( asset, {
+            path: I
+          });
+        },
+        privilegeStatus: I
+      }],
+      assets: [ ( asset ) => {
+        if( asset.isPrivate && req.session.userName !== user.userName )
+          return undefined;
+
+        return MC.map( asset, {
+          name: I,
+          idName: I,
+          description: I,
+          path: I
+        })
+      }],
+      lastLogin: I,
+      lastLogout: I,
+      onlineStatus: I,
+      privilegeStatus: I
+    })
+
+  },
   updateUserName( id, userName, callback ) {
   
     User.findOne({ userName }).exec( ( err, user ) => {
@@ -284,87 +370,31 @@ module.exports = {
       if( err )
         return util.err( res, err );
 
-      const response = MC.map( user, {
-        userName: I,
-        name: I,
-        description: I,
-        profileAsset: ( asset ) => {
+      let appreciatedNumber = user.appreciatedPosts.length;
 
-          if( !asset )
-            return undefined;
 
-          return MC.map( asset, {
-            path: I
-          });
-        },
-        posts: [ ( post ) => {
-          if( post.isPrivate && req.session.userName !== user.userName )
-            return undefined;
+      if( appreciatedNumber > 0 )
+        user.appreciatedPosts.forEach( ( post, i ) => {
+        
+          Post.findOne({ id: post.id })
+            .populate( 'owner' ).exec( ( err, post ) => {
+            
+              if( err )
+                return util.err( res, err );
 
-          return MC.map( post, {
-            idTitle: I,
-            title: I,
-            description: I,
-            views: I,
-            appreciations: I
-          })
-        }],
-        appreciatedPosts: [{
-          idTitle: I,
-          title: I,
-          description: I,
-          owner: I,
-          views: I,
-          appreciatons: I
-        }],
-        follows: [{
-          userName: I,
-          name: I,
-          onlineStatus: I,
-          profileAsset: ( asset ) => {
+              user.appreciatedPosts[ i ].owner = post.owner;
 
-            if( !asset )
-              return undefined;
+              --appreciatedNumber;
+              if( appreciatedNumber <= 0 ) {
+              
+                return res.json( util.getUserResponse( user ) );
+              }
+            })
+        });
 
-            return MC.map( asset, {
-              path: I
-            });
-          },
-          privilegeStatus: I
-        }],
-        followedBy: [{
-          userName: I,
-          name: I,
-          onlineStatus: I,
-          profileAsset: ( asset ) => {
+      else
+        return res.json( util.getUserResponse( user ));
 
-            if( !asset )
-              return undefined;
-
-            return MC.map( asset, {
-              path: I
-            });
-          },
-          privilegeStatus: I
-        }],
-        assets: [ ( asset ) => {
-          if( asset.isPrivate && req.session.userName !== user.userName )
-            return undefined;
-
-          return MC.map( asset, {
-            name: I,
-            idName: I,
-            description: I,
-            path: I
-          })
-        }],
-        lastLogin: I,
-        lastLogout: I,
-        onlineStatus: I,
-        privilegeStatus: I
-      })
-
-      return res.json( response );
     })
   },
 
@@ -374,7 +404,6 @@ module.exports = {
       const id = req.session.userId;
 
       User.findOne({ id })
-        .populate( 'profileAsset')
         .exec( ( err, user ) => {
 
       

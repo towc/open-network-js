@@ -1,1 +1,4 @@
 {"$$indexCreated":{"fieldName":"id","unique":true,"sparse":false}}
+{"post_appreciatedBy":1,"user_appreciatedPosts":1,"id":1,"_id":1}
+{"post_appreciatedBy":2,"user_appreciatedPosts":1,"id":2,"_id":2}
+{"post_appreciatedBy":3,"user_appreciatedPosts":1,"id":3,"_id":3}
