@@ -39,6 +39,7 @@ module.exports.policies = {
     createCustom: [ 'isAuthenticated', 'hasAssetName' ],
     updateCustom: [ 'isAuthenticated', 'hasAssetId' ],
     request: [ 'userNameExistsAndHasAssetId' ],
+    fetch: [ 'userNameExistsAndHasAssetId' ],
     delete: [ 'isAuthenticated' ]
   }
 

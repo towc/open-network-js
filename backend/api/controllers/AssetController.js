@@ -78,7 +78,7 @@ const util = {
     })
   },
 
-  updateIsPrivate( id, isPrivate, callback ) {
+  updatePrivate( id, isPrivate, callback ) {
   
     Asset.update({ id }, { isPrivate }).exec( ( err, asset ) => {
     
@@ -183,12 +183,62 @@ module.exports = {
 
       const ownerId = user.id;
 
-      Asset.findOne({ idName, owner: ownerId }).exec( ( err, asset ) => {
+      Asset.findOne({ idName, owner: ownerId })
+        .populate( 'owner' )
+        .exec( ( err, asset ) => {
       
         if( err )
           return util.err( res, err );
 
-        return res.redirect( asset.path );
+        if( asset.isPrivate && req.session.userName !== userName )
+          return req.badRequest( 'asset does not exist' );
+
+        const response = MC.map( asset, {
+          owner: {
+            userName: I,
+          },
+          name: I,
+          idName: I,
+          description: I,
+          path: I,
+          isPrivate: I,
+          keywords: I
+        });
+        return res.json( response );
+      })
+    })
+  },
+  fetch( req, res ) {
+  
+    const idName = req.param( 'assetid' )
+        , userName = req.param( 'username' );
+  
+    User.findOne({ userName }).exec( ( err, user ) => {
+    
+      if( err )
+        return util.err( res, err );
+
+      const ownerId = user.id;
+
+      Asset.findOne({ idName, owner: ownerId })
+        .populate( 'owner' )
+        .exec( ( err, asset ) => {
+      
+        if( err )
+          return util.err( res, err );
+
+        if( asset.isPrivate && req.session.userName !== userName )
+          return req.badRequest( 'asset does not exist' );
+
+        const views = asset.views + 1;
+        Asset.update({ id: asset.id }, { views }).exec( ( err, records ) => {
+        
+          if( err )
+            util.err( res, err );
+
+        })
+
+        res.redirect( asset.path );
       })
     })
   },

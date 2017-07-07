@@ -1,2 +1,5 @@
 {"$$indexCreated":{"fieldName":"id","unique":true,"sparse":false}}
-{"name":"testing","idName":"testing-6994976003952715","owner":1,"createdAt":1499387438191,"updatedAt":1499387438191,"id":1,"description":"asset to be used in a post","path":"http://lorempizza.com/240/240","isPrivate":false,"_id":1}
+{"name":"testing","idName":"testing-6994976003952715","owner":1,"createdAt":1499387438191,"updatedAt":1499387438191,"id":1,"description":"asset to be used in a post","path":"http://lorempizza.com/240/240","isPrivate":false,"keywords":"","views":0,"_id":1}
+{"name":"sda","idName":"sd","owner":1,"createdAt":1499390232579,"updatedAt":1499393376241,"id":2,"description":"asset to be used in a post\nsa\nfdsafadsfsadfas","path":"http://lorempizza.com/20/20","isPrivate":true,"keywords":"a,b,c","views":0,"_id":2}
+{"name":"sda","idName":"sd","owner":1,"createdAt":1499390232579,"updatedAt":1499393511841,"id":2,"description":"asset to be used in a post\nsa\nfdsafadsfsadfas","path":"http://lorempizza.com/20/20","isPrivate":true,"keywords":"a,b,c","views":0,"_id":2}
+{"name":"sda","idName":"sd","owner":1,"createdAt":1499390232579,"updatedAt":1499393511841,"id":2,"description":"asset to be used in a post\nsa\nfdsafadsfsadfas","path":"http://lorempizza.com/20/20","isPrivate":true,"keywords":"a,b,c","views":0,"_id":2}

@@ -52,6 +52,7 @@ module.exports.routes = Object.assign( vueRoutes, {
   'post /api/asset/create': 'Asset.createCustom',
   'post /api/asset/update': 'Asset.updateCustom',
   'get /api/asset/:username/:assetid': 'Asset.request',
+  'get /api/asset/fetch/:username/:assetid': 'Asset.fetch',
   'delete /asset/:assetid': 'Asset.delete',
 
   'get /socket/call-in/:token': 'User.socketCallIn',

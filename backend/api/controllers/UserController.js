@@ -14,7 +14,7 @@ const util = {
     sails.log( err );
     return res.serverError('internal server error');
   },
-  getUserResponse( user ) {
+  getUserResponse( user, sessionUserName ) {
   
     return MC.map( user, {
       userName: I,
@@ -31,7 +31,7 @@ const util = {
       },
       posts: [ ( post ) => {
 
-        if( post.isPrivate && req.session.userName !== user.userName )
+        if( post.isPrivate && sessionUserName !== user.userName )
           return undefined;
 
         return MC.map( post, {
@@ -83,7 +83,7 @@ const util = {
         privilegeStatus: I
       }],
       assets: [ ( asset ) => {
-        if( asset.isPrivate && req.session.userName !== user.userName )
+        if( asset.isPrivate && sessionUserName !== user.userName )
           return undefined;
 
         return MC.map( asset, {
@@ -387,13 +387,13 @@ module.exports = {
               --appreciatedNumber;
               if( appreciatedNumber <= 0 ) {
               
-                return res.json( util.getUserResponse( user ) );
+                return res.json( util.getUserResponse( user, req.session.userName ) );
               }
             })
         });
 
       else
-        return res.json( util.getUserResponse( user ));
+        return res.json( util.getUserResponse( user, req.session.userName ));
 
     })
   },

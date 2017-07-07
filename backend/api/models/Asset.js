@@ -32,6 +32,10 @@ module.exports = {
       type: 'boolean',
       defaultsTo: false
     },
+    views: {
+      type: 'number',
+      defaultsTo: 0
+    },
     keywords: {
       type: 'string',
       defaultsTo: ''
