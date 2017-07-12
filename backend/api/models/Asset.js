@@ -39,6 +39,9 @@ module.exports = {
     keywords: {
       type: 'string',
       defaultsTo: ''
+    },
+    editedAt: {
+      type: 'number'
     }
   },
 

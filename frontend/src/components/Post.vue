@@ -22,7 +22,7 @@
         {{ currentUserAppreciatesPost ? 'Appreciated' : 'Appreciate' }}
       </button>
     </div>
-    <div class="layer layer-5">
+    <div class="layer layer-5 container container-user">
       <router-link :to="`user/${ postData.owner.userName }`"
         class="author-group">
         <img class="author-image" :src=postData.owner.profileAsset.path />
@@ -114,6 +114,7 @@ export default {
 
       }).then( postData => {
 
+        console.log( postData );
         const createdDate = new Date( postData.createdAt );
         postData.writtenDate = [ createdDate.getDate(), createdDate.getMonth() + 1, createdDate.getFullYear() ].join('/');
         
@@ -145,6 +146,8 @@ export default {
         if( err )
           return this.setAppreciationInfo( err );
   
+        ++this.postData.appreciations;
+
         this.currentUser.appreciatedPosts.push( this.postData );
         this.setAppreciationInfo( '' );
       });
@@ -202,7 +205,8 @@ export default {
   text-align: center;
 }
 .appreciate-button {
-  width: 350px;
+  width: 450px;
+  height: 50px;
   display: block;
 }
 .layer-5 {
@@ -210,6 +214,7 @@ export default {
   margin-left: auto;
   margin-right: auto;
   display: flex;
+  padding: 33px;
   justify-content: space-between;
 }
 .author-group {

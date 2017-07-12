@@ -5,7 +5,7 @@ import Auth from '@/components/Auth'
 import User from '@/components/User'
 import Post from '@/components/Post'
 import PostEdit from '@/components/PostEdit'
-
+import Asset from '@/components/Asset'
 import AssetEdit from '@/components/AssetEdit'
 
 Vue.use(Router)
@@ -34,10 +34,10 @@ export default new Router({
       name: 'PostEdit',
       component: PostEdit
     }, {
-      path: '/asset/:username/:postid',
-      component: AssetEdit
+      path: '/asset/:username/:assetid',
+      component: Asset
     }, {
-      path: '/asset/:username/:postid/edit',
+      path: '/asset/:username/:assetid/edit',
       component: AssetEdit
     }
   ]

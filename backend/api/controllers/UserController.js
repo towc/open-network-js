@@ -26,7 +26,8 @@ const util = {
           return undefined;
 
         return MC.map( asset, {
-          path: I
+          path: I,
+          idName: I
         });
       },
       posts: [ ( post ) => {

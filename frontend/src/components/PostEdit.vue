@@ -53,7 +53,7 @@
             type=post
             names="Private|Public"
            @change=switchPrivate
-           :initActiveIndex=PUBLIC />
+            :initActiveIndex="postIsPrivate ? PRIVATE : PUBLIC" />
         </div>
         <div class="layer layer-2-sub layer-2e">
           <div class="form-info">{{ infoMessage }}</div>
@@ -166,8 +166,6 @@ export default {
     },
     checkAuthAndGetPost( rounds ) {
 
-      console.log( rounds, this.pendingAuthentication );
-    
       if( !this.isAuthenticated && !this.pendingAuthentication )
         return this.setFullScreenInfo( true, 'Log In or Sign Up to edit a post')
 
@@ -220,13 +218,12 @@ export default {
           this.postTitle = this.saved.postTitle = postData.title;
           this.postIdTyped = this.saved.postId = postData.idTitle;
           this.postIsPrivate = this.saved.postIsPrivate = postData.isPrivate;
-          this.postKeywords = this.saved.postKeywords = postData.keywords.split(',').join(', ');
+          this.postKeywords = ( this.saved.postKeywords = postData.keywords ).split(',').join(', ');
 
           this.setFullScreenInfo( false );
 
         }).catch( error => {
 
-          console.log( err );
           switch( error ) {
             case '"user does not have post"':
               this.setFullScreenInfo( true, 'Post either doesn\'t exist or has been removed' );
@@ -338,6 +335,7 @@ export default {
 }
 .container {
   width: 325px;
+  margin-bottom: 30px;
 }
 .layer-2-sub {
   margin-left: 30px;

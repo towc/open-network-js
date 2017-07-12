@@ -98,9 +98,10 @@ module.exports = {
         , name = req.param( 'assetname' )
         , idName = req.param( 'assetid' ) || name.replace( / /g, '-' ).replace( /[\,\:\@\/\\]/g, '' )
         , description = req.param( 'description' )
-        , path = req.param( 'assetpath' );
+        , path = req.param( 'assetpath' )
+        , editedAt = Date.now();
 
-    Asset.create({ name, idName, description, path, owner: userId }).exec( ( err, asset ) => {
+    Asset.create({ name, idName, description, path, editedAt, owner: userId }).exec( ( err, asset ) => {
     
       if( err )
         return util.err( res, err );
@@ -121,6 +122,7 @@ module.exports = {
         , path = req.param( 'assetpath' )
         , isPrivate = req.param( 'isprivate' )
         , keywords = req.param( 'keywords' )
+        , editedAt = Date.now()
 
         , toGo = []
         , callback = ( err, errMessage, property ) => {
@@ -168,6 +170,12 @@ module.exports = {
         toGo.push( 'isPrivate' );
         util.updatePrivate( id, isPrivate, callback );
       }
+
+      Asset.update({ id }, { editedAt }).exec( ( err, records ) => {
+      
+        if( err )
+          return util.err( res, err );
+      })
     })
   },
 
@@ -196,13 +204,17 @@ module.exports = {
         const response = MC.map( asset, {
           owner: {
             userName: I,
+            name: I,
+            privilegeStatus: I
           },
           name: I,
           idName: I,
           description: I,
           path: I,
           isPrivate: I,
-          keywords: I
+          keywords: I,
+          editedAt: I,
+          createdAt: I
         });
         return res.json( response );
       })
@@ -240,6 +252,27 @@ module.exports = {
 
         res.redirect( asset.path );
       })
+    })
+  },
+
+  setProfile( req, res ) {
+    
+    const id = req.session.userId
+        , idName = req.param( 'assetid' );
+
+    Asset.findOne({ idName }).exec( ( err, asset ) => {
+    
+      if( err )
+        return util.err( res, err );
+
+      User.update({ id }, { profileAsset: asset.id }).exec( ( err, records ) => {
+      
+        if( err )
+          return util.err( res, err );
+
+        return res.ok( 'profile asset updated for user' );
+      })
+      
     })
   },
 

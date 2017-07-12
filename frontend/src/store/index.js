@@ -28,6 +28,11 @@ const store = new Vuex.Store({
           }
 
       } else state.currentUser = false;
+    },
+    setProfileImage( state, payload ) {
+    
+      state.currentUser.profileAsset.path = payload.path;
+      state.currentUser.profileAsset.idName = payload.assetId;
     }
   },
   actions: {
@@ -192,7 +197,7 @@ const store = new Vuex.Store({
       return new Promise( ( resolve, reject ) => {
       
         const xhr = new XMLHttpRequest;
-        xhr.open( 'GET', `/api/asset/${ payload.userName }/${ payload.postId }` );
+        xhr.open( 'GET', `/api/asset/${ payload.userName }/${ payload.assetId }` );
         xhr.onload = () => {
         
           if( xhr.status === 200 ) {
@@ -230,6 +235,22 @@ const store = new Vuex.Store({
         xhr.send( JSON.stringify( payload ) );
       })
     },
+    saveAsset( context, payload ) {
+    
+      return new Promise( ( resolve, reject ) => {
+      
+        const xhr = new XMLHttpRequest;
+        xhr.open( 'POST', '/api/asset/update' );
+
+        xhr.onload = () => {
+        
+          let text = xhr.responseText;
+          resolve( xhr.status === 200 ? '' : text.substring( 1, text.length - 1 ) );
+
+        };
+        xhr.send( JSON.stringify( payload ) );
+      })
+    },
     deletePost( context, payload ) {
 
       return new Promise( ( resolve, reject ) => {
@@ -252,6 +273,28 @@ const store = new Vuex.Store({
         xhr.open( 'GET', `/api/post/appreciate/${ payload.userName }/${ payload.postId }` );
 
         xhr.onload = () => {
+        
+          let text = xhr.responseText;
+          resolve( xhr.status === 200 ? '' : text.substring( 1, text.length - 1 ) );
+
+        };
+        xhr.send();
+      })
+    },
+
+    setAssetAsProfile( context, payload ) {
+    
+      return new Promise( ( resolve, reject ) => {
+      
+        const xhr = new XMLHttpRequest;
+        xhr.open( 'GET', `/api/asset/setProfile/${ payload.assetId }` );
+
+        xhr.onload = () => {
+
+          context.commit( 'setProfileImage', {
+            path: `/api/asset/fetch/${ context.state.currentUser.userName }/${ payload.assetId }`,
+            assetId: payload.assetId
+          });
         
           let text = xhr.responseText;
           resolve( xhr.status === 200 ? '' : text.substring( 1, text.length - 1 ) );

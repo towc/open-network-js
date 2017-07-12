@@ -220,14 +220,14 @@ module.exports = {
     const idTitle = req.param( 'postid' )
         , userName = req.param( 'username' );
 
-    User.findOne({ userName }).exec( ( err, user ) => {
+    User.findOne({ userName })
+      .populate( 'profileAsset' )
+      .exec( ( err, user ) => {
 
       if( err )
         util.err( res, err );
 
-      Post.findOne({ idTitle, owner: user.id })
-        .populate( 'owner' )
-        .exec( ( err, post ) => {
+      Post.findOne({ idTitle, owner: user.id }).exec( ( err, post ) => {
        
           if( err )
             return util.err( res, err );
@@ -276,7 +276,7 @@ module.exports = {
             appreciations: I,
             createdAt: I,
             editedAt: I,
-            owner: {
+            owner: () => MC.map( user, {
               userName: I,
               name: I,
               description: I,
@@ -286,11 +286,12 @@ module.exports = {
                 if( !asset )
                   return undefined;
 
-                return MC.map( profileAsset, {
-                  path: I
+                return MC.map( asset, {
+                  path: I,
+                  idName: I
                 });
               }
-            }
+            })
           });
 
           res.json( response );

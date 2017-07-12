@@ -12,10 +12,10 @@
       <div class="container container-asset">
      
         <div class="layer layer-2-sub layer-2a">
-          <label class="label label-asset-title">
-            <div class="form-label">Title</div>
+          <label class="label label-asset-name">
+            <div class="form-label">Name</div>
             <input class="form-input form-input-asset"
-              v-model=assetTitle
+              v-model=assetName
               placeholder="Insert..." />
           </label>
         </div>
@@ -68,7 +68,7 @@
             type=asset
             names="Private|Public"
            @change=switchPrivate
-           :initActiveIndex=PUBLIC />
+            :initActiveIndex="assetIsPrivate ? PUBLIC : PRIVATE" />
         </div>
         <div class="layer layer-2-sub layer-2e">
           <div class="form-info">{{ infoMessage }}</div>
@@ -77,6 +77,9 @@
             @click=saveAsset >Save</button>
           <router-link class="form-button form-button-asset"
             :to="`/asset/${ currentUser.userName }/${ assetId }`" >Go To Asset</router-link>
+          <button class="form-button form-button-asset"
+            :class="{ 'form-button-inverted': isAuthenticated && isProfileImage }"
+            @click=setAsProfile>Set as Profile</button>
         </div>
         <div class="layer layer-2-sub layer-2f">
           <button class="form-button form-button-danger"
@@ -116,20 +119,21 @@ export default {
     fullScreenInfoDisplaying: false,
     fullScreenInfoMessage: '',
 
-    markdownContent: '',
-    assetTitle: '',
+    assetName: '',
     assetIdTyped: '',
     assetIsPrivate: false,
     assetKeywords: '',
+    assetDescription: '',
     assetPath: '',
 
     // FIXED by displaying backend message, but keep for later in case
     isAssetIdAvailable: true,
 
     saved: {
-      markdownContent: '',
-      assetTitle: '',
+      assetName: '',
       assetId: '',
+      assetDescription: '',
+      assetPath: '',
       assetKeywords: '',
       assetIsPrivate: false,
     },
@@ -145,8 +149,10 @@ export default {
   computed: {
     ...mapState([ 'isAuthenticated', 'pendingAuthentication', 'currentUser' ]),
     isSaveable() {
-      return ( this.markdownContent !== this.saved.markdownContent
-            || this.assetTitle !== this.saved.assetTitle
+
+      return ( this.assetDescription !== this.saved.assetDescription
+            || this.assetPath !== this.saved.assetPath
+            || this.assetName !== this.saved.assetName
             || this.assetId !== this.saved.assetId
             || this.parsedKeywords !== this.saved.assetKeywords
             || this.assetIsPrivate !== this.saved.assetIsPrivate )
@@ -157,9 +163,12 @@ export default {
     },
     assetId() {
 
-      return ( this.isAssetIdSync ? this.assetTitle : this.assetIdTyped )
+      return ( this.isAssetIdSync ? this.assetName : this.assetIdTyped )
                 .replace( / /g, '-' )
                 .replace( /[\,\'\:]/g, '' );
+    },
+    isProfileImage() {
+      return this.currentUser.profileAsset.idName === this.$route.params.assetid;
     }
   },
 
@@ -182,8 +191,6 @@ export default {
     },
     checkAuthAndGetAsset( rounds ) {
 
-      console.log( rounds, this.pendingAuthentication );
-    
       if( !this.isAuthenticated && !this.pendingAuthentication )
         return this.setFullScreenInfo( true, 'Log In or Sign Up to edit a asset')
 
@@ -232,22 +239,23 @@ export default {
 
       }).then( assetData => {
 
-          this.markdownContent = this.saved.markdownContent = assetData.markdownContent;
-          this.assetTitle = this.saved.assetTitle = assetData.title;
-          this.assetIdTyped = this.saved.assetId = assetData.idTitle;
-          this.assetIsPrivate = this.saved.assetIsPrivate = assetData.isPrivate;
-          this.assetKeywords = this.saved.assetKeywords = assetData.keywords.split(',').join(', ');
+        this.assetName = this.saved.assetName = assetData.name;
+        this.assetIdTyped = this.saved.assetId = assetData.idName;
+        this.assetIsPrivate = this.saved.assetIsPrivate = assetData.isPrivate;
+        this.assetPath = this.saved.assetPath = assetData.path;
+        this.assetDescription = this.saved.assetDescription = assetData.description;
+        this.assetKeywords = ( this.saved.assetKeywords = assetData.keywords ).split(',').join(', ');
 
-          this.setFullScreenInfo( false );
+        this.setFullScreenInfo( false );
 
-        }).catch( error => {
+      }).catch( error => {
 
-          switch( error ) {
-            case '"user does not have asset"':
-              this.setFullScreenInfo( true, 'Asset either doesn\'t exist or has been removed' );
-              break;
-          }
-        })
+        switch( error ) {
+          case '"user does not have asset"':
+            this.setFullScreenInfo( true, 'Asset either doesn\'t exist or has been removed' );
+            break;
+        }
+      })
     },
     saveAsset() {
       
@@ -258,8 +266,8 @@ export default {
         assetid: this.saved.assetId
       };
       
-      if( this.saved.assetTitle !== this.assetTitle )
-        changed.assetname = this.saved.assetTitle = this.assetTitle;
+      if( this.saved.assetName !== this.assetName )
+        changed.assetname = this.saved.assetName = this.assetName;
 
       if( this.saved.assetId !== this.assetId )
         changed.newassetid = this.saved.assetId = this.assetId;
@@ -269,6 +277,12 @@ export default {
 
       if( this.saved.assetKeywords !== this.parsedKeywords )
         changed.keywords = this.saved.assetKeywords = this.parsedKeywords;
+
+      if( this.saved.assetDescription !== this.assetDescription )
+        changed.description = this.saved.assetDescription = this.assetDescription;
+
+      if( this.saved.assetPath !== this.assetPath )
+        changed.assetpath = this.saved.assetPath = this.assetPath;
 
 
       this.$store.dispatch( 'saveAsset', changed ).then( ( errMessage ) => {
@@ -298,6 +312,18 @@ export default {
 
         this.$router.replace( '/' );
       });
+    },
+    setAsProfile() {
+
+      if( this.isProfileImage )
+        return false;
+
+      this.$store.dispatch( 'setAssetAsProfile', {
+      
+        assetId: this.$route.params.assetid
+
+      });
+      
     },
 
     setInfo( message ) {
@@ -334,6 +360,7 @@ export default {
 .layer-2 {
   display: flex;
   width: 815px;
+  margin-bottom: 30px;
   margin-left: calc( 50% - 815px / 2 )
 }
 .fullscreen-info-message {

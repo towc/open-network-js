@@ -75,6 +75,9 @@ a {
 .container-asset {
   border-color: #7241EE;
 }
+.container-user {
+  border-color: #7D712B;
+}
 .container-agnostic {
   border-color: #888;
 }
